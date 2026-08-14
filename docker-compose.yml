@@ -1,0 +1,10 @@
+services:
+  rag-assistant:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ANTHROPIC_MODEL_ID=${ANTHROPIC_MODEL_ID:-claude-sonnet-5}
+    volumes:
+      - ./data:/app/data:ro

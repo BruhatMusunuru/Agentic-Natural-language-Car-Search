@@ -5,6 +5,25 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.122.0",
+    "duckdb>=1.5.5",
+    "fastapi>=0.141.1",
+    "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
+    "pytz>=2026.3.post1",
+    "strands-agents>=1.52.0",
+    "uvicorn[standard]>=0.52.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+# Only needed for exploring the data in test.ipynb - not used by rag_assistant
+# or its tests, and deliberately excluded from the Docker image (uv sync
+# --no-dev there installs neither this group nor "dev"). Get it with
+# `uv sync --group notebook`.
+notebook = [
     "ipykernel>=7.3.0",
     "jupyter>=1.1.1",
     "matplotlib>=3.11.1",

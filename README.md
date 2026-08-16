@@ -39,7 +39,95 @@ Then, from another terminal:
 ```bash
 curl -s -X POST http://127.0.0.1:8000/search \
   -H "Content-Type: application/json" \
-  -d '{"query": "reliable family SUV under $30k, low mileage, near Chicago"}' | python3 -m json.tool
+  -d '{"query": "reliable family SUV under $30k, low mileage, near Detroit"}' | python3 -m json.tool
+```
+
+Sample response:
+
+```json
+{
+    "filters": {
+        "make": null,
+        "model": null,
+        "body_type": "SUV",
+        "price_max": 30000.0,
+        "mileage_max": 50000,
+        "year_min": null,
+        "fuel_type": null,
+        "location": "Detroit",
+        "radius_mi": null
+    },
+    "results": [
+        {
+            "id": "784435335",
+            "make": "Jeep",
+            "model": "Commander",
+            "body_type": "SUV",
+            "price": 7465.0,
+            "mileage": 4337,
+            "year": 2007,
+            "fuel_type": "Gasoline",
+            "city": "Saint Clair",
+            "state": "MI",
+            "zip": "48079"
+        },
+        {
+            "id": "784584884",
+            "make": "Ford",
+            "model": "Escape",
+            "body_type": "SUV",
+            "price": 15620.0,
+            "mileage": 44849,
+            "year": 2018,
+            "fuel_type": "Gasoline",
+            "city": "Sterling Heights",
+            "state": "MI",
+            "zip": "48313"
+        },
+        {
+            "id": "785845728",
+            "make": "Jeep",
+            "model": "Wrangler",
+            "body_type": "SUV",
+            "price": 17990.0,
+            "mileage": 33290,
+            "year": 2006,
+            "fuel_type": "Gasoline",
+            "city": "Monroe",
+            "state": "MI",
+            "zip": "48161"
+        },
+        {
+            "id": "783892345",
+            "make": "Jeep",
+            "model": "Compass",
+            "body_type": "SUV",
+            "price": 19650.0,
+            "mileage": 48948,
+            "year": 2019,
+            "fuel_type": "Gasoline",
+            "city": "White Lake",
+            "state": "MI",
+            "zip": "48383"
+        },
+        {
+            "id": "784017498",
+            "make": "Ford",
+            "model": "Escape",
+            "body_type": "SUV",
+            "price": 20480.0,
+            "mileage": 33629,
+            "year": 2020,
+            "fuel_type": "Gasoline",
+            "city": "Plymouth",
+            "state": "MI",
+            "zip": "48170"
+        }
+    ],
+    "explanation": "Found 5 listings matching SUV, under 50,000 mi, under $30,000, near Detroit.",
+    "relaxed_fields": null,
+    "clarifying_question": null
+}
 ```
 
 A malformed request (missing/empty `query`) returns a `4xx`. If a query is

@@ -17,7 +17,7 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": "Curated via scripts/curate_seed_listings.py into src/car_search/data/seed_listings.json (24 rows); zip lookup in src/car_search/locations.py; loader in src/car_search/inventory.py."
     },
     {
@@ -34,7 +34,7 @@
         "Tests pass"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": "SearchFilters + BodyType/FuelType str enums added to src/car_search/models.py; tests in tests/test_models.py."
     },
     {
@@ -51,7 +51,7 @@
         "Tests pass"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": "filter_listings (pure, per-field excluded_by counts) + @tool-wrapped search_listings in src/car_search/search.py; haversine in src/car_search/distance.py; free-text location resolution (named locations + zip fallback) added as locations.py::resolve_location; strands-agents added as a dependency for the real @tool decorator. Tests in tests/test_search.py."
     },
     {
@@ -67,7 +67,7 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {

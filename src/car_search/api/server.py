@@ -22,4 +22,9 @@ def search(request: SearchRequest) -> SearchResponse:
     query = request.query.strip()
     if not query:
         raise HTTPException(status_code=422, detail="query must not be empty")
-    return run_search(query)
+    try:
+        return run_search(query)
+    except RuntimeError as exc:
+        # e.g. ANTHROPIC_API_KEY missing/invalid, or an upstream LLM failure --
+        # surface as a clean 502 instead of an unhandled 500 traceback.
+        raise HTTPException(status_code=502, detail=str(exc)) from exc

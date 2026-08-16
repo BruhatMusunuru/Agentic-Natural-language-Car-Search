@@ -18,6 +18,7 @@ traffic.
 from __future__ import annotations
 
 import csv
+import os
 import tempfile
 from functools import lru_cache
 from pathlib import Path
@@ -74,10 +75,15 @@ def _zip_coords_csv_path() -> Path:
         for z in _zipcodes.list_all()  # type: ignore[no-untyped-call]
         if z.get("lat") is not None and z.get("long") is not None
     )
-    with cache_path.open("w", newline="") as f:
+    # Write to a process-unique temp file and atomically rename it into
+    # place, so concurrent workers (e.g. multiple uvicorn workers starting
+    # simultaneously) can't observe or produce a partially-written cache.
+    tmp_path = cache_path.with_suffix(f".{os.getpid()}.tmp")
+    with tmp_path.open("w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["zip", "lat", "lon"])
         writer.writerows(rows)
+    tmp_path.replace(cache_path)  # atomic on POSIX
     return cache_path
 
 
@@ -145,27 +151,36 @@ def search_full_dataset(filters: SearchFilters) -> FilterResult:
 
     base_from = f"read_parquet('{DATA_GLOB}') LEFT JOIN zip_coords zc ON zc.zip = sellerZip"
 
-    excluded_by: dict[str, int] = {}
-    for field, predicate in field_predicates.items():
+    # Compute every field's exclusion count in one conditional-aggregation
+    # query instead of one SELECT count(*) per field -- avoids up to 9
+    # separate full scans of the dataset per call (this function can be
+    # invoked repeatedly by relaxation.py::relax_and_search on zero-result
+    # queries). The field names used as column aliases below are always
+    # drawn from the fixed, hardcoded set of predicate dict keys (never
+    # user input), so inlining them into the SQL is safe -- same trust
+    # boundary already relied on for the CSV path in _connection().
+    all_predicates: dict[str, tuple[str, list[object]] | None] = {**field_predicates, "radius_mi": radius_predicate}
+    count_exprs: list[str] = []
+    count_params: list[object] = []
+    for field, predicate in all_predicates.items():
         if predicate is None:
-            excluded_by[field] = 0
+            count_exprs.append(f"0 AS {field}")
             continue
         sql, params = predicate
-        count = con.execute(
-            f"SELECT count(*) FROM {base_from} WHERE {_QUALIFYING_WHERE} AND NOT ({sql})",
-            params,
-        ).fetchone()
-        excluded_by[field] = count[0] if count else 0
+        # COALESCE guards against SUM returning NULL if zero rows satisfy
+        # _QUALIFYING_WHERE (an empty aggregate group has no rows to sum).
+        count_exprs.append(f"COALESCE(sum(CASE WHEN NOT ({sql}) THEN 1 ELSE 0 END), 0) AS {field}")
+        count_params.extend(params)
 
-    if radius_predicate is None:
-        excluded_by["radius_mi"] = 0
-    else:
-        sql, params = radius_predicate
-        count = con.execute(
-            f"SELECT count(*) FROM {base_from} WHERE {_QUALIFYING_WHERE} AND NOT ({sql})",
-            params,
-        ).fetchone()
-        excluded_by["radius_mi"] = count[0] if count else 0
+    counts_row = con.execute(
+        f"SELECT {', '.join(count_exprs)} FROM {base_from} WHERE {_QUALIFYING_WHERE}",
+        count_params,
+    ).fetchone()
+    excluded_by: dict[str, int] = (
+        dict(zip(all_predicates.keys(), counts_row, strict=True))
+        if counts_row
+        else dict.fromkeys(all_predicates.keys(), 0)
+    )
 
     where_clauses = [_QUALIFYING_WHERE]
     all_params: list[object] = []

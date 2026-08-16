@@ -37,40 +37,56 @@ class RelaxationStep:
         return f"{self.field}: {self.from_value} → {self.to_value}"
 
 
+def _relax_radius(filters: SearchFilters) -> tuple[SearchFilters, RelaxationStep] | None:
+    if filters.location is None:
+        return None
+    current = filters.radius_mi if filters.radius_mi is not None else DEFAULT_RADIUS_MI
+    new_value = current * 2
+    return filters.model_copy(update={"radius_mi": new_value}), RelaxationStep("radius_mi", current, new_value)
+
+
+def _relax_mileage_max(filters: SearchFilters) -> tuple[SearchFilters, RelaxationStep] | None:
+    if filters.mileage_max is None:
+        return None
+    new_value = round(filters.mileage_max * 1.5)
+    return filters.model_copy(update={"mileage_max": new_value}), RelaxationStep(
+        "mileage_max", filters.mileage_max, new_value
+    )
+
+
+def _relax_price_max(filters: SearchFilters) -> tuple[SearchFilters, RelaxationStep] | None:
+    if filters.price_max is None:
+        return None
+    new_value = round(filters.price_max * 1.2)
+    return filters.model_copy(update={"price_max": new_value}), RelaxationStep(
+        "price_max", filters.price_max, new_value
+    )
+
+
+def _relax_year_min(filters: SearchFilters) -> tuple[SearchFilters, RelaxationStep] | None:
+    if filters.year_min is None:
+        return None
+    new_value = filters.year_min - 3
+    return filters.model_copy(update={"year_min": new_value}), RelaxationStep(
+        "year_min", filters.year_min, new_value
+    )
+
+
+_RELAXERS: dict[str, Callable[[SearchFilters], tuple[SearchFilters, RelaxationStep] | None]] = {
+    "radius_mi": _relax_radius,
+    "mileage_max": _relax_mileage_max,
+    "price_max": _relax_price_max,
+    "year_min": _relax_year_min,
+}
+
+
 def _relax_field(field: str, filters: SearchFilters) -> tuple[SearchFilters, RelaxationStep] | None:
     """Return (relaxed filters, step record), or None if this field can't be relaxed further."""
-    if field == "radius_mi":
-        if filters.location is None:
-            return None
-        current = filters.radius_mi if filters.radius_mi is not None else DEFAULT_RADIUS_MI
-        new_value = current * 2
-        return filters.model_copy(update={"radius_mi": new_value}), RelaxationStep(field, current, new_value)
-
-    if field == "mileage_max":
-        if filters.mileage_max is None:
-            return None
-        new_value = round(filters.mileage_max * 1.5)
-        return filters.model_copy(update={"mileage_max": new_value}), RelaxationStep(
-            field, filters.mileage_max, new_value
-        )
-
-    if field == "price_max":
-        if filters.price_max is None:
-            return None
-        new_value = round(filters.price_max * 1.2)
-        return filters.model_copy(update={"price_max": new_value}), RelaxationStep(
-            field, filters.price_max, new_value
-        )
-
-    if field == "year_min":
-        if filters.year_min is None:
-            return None
-        new_value = filters.year_min - 3
-        return filters.model_copy(update={"year_min": new_value}), RelaxationStep(
-            field, filters.year_min, new_value
-        )
-
-    raise ValueError(f"Unknown relaxable field: {field}")
+    try:
+        relaxer = _RELAXERS[field]
+    except KeyError:
+        raise ValueError(f"Unknown relaxable field: {field}") from None
+    return relaxer(filters)
 
 
 def relax_and_search(

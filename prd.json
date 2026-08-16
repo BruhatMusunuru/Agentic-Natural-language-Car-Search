@@ -51,8 +51,8 @@
         "Tests pass"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "filter_listings (pure, per-field excluded_by counts) + @tool-wrapped search_listings in src/car_search/search.py; haversine in src/car_search/distance.py; free-text location resolution (named locations + zip fallback) added as locations.py::resolve_location; strands-agents added as a dependency for the real @tool decorator. Tests in tests/test_search.py."
+      "passes": true,
+      "notes": "filter_listings (pure, per-field excluded_by counts) + @tool-wrapped search_listings in src/car_search/search.py; haversine in src/car_search/distance.py; free-text location resolution (named locations + zip fallback) in locations.py::resolve_location. Tests in tests/test_search.py. Verified: 23 tests pass, mypy clean, ruff clean."
     },
     {
       "id": "US-004",

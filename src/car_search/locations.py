@@ -1,96 +1,100 @@
-"""Static zip -> (lat, lon) lookup and free-text location resolution.
+"""zip/city -> (lat, lon) resolution, backed by the `zipcodes` package.
 
-No live/network geocoding (see FR-15). Coordinates are city-level
-approximations sourced from public city coordinates, hardcoded for exactly
-the zip codes present in the curated seed fixture (see
-scripts/curate_seed_listings.py).
+`zipcodes` ships a bundled offline dataset of every US zip code (~42k,
+~1.9MB) -- no network call, ever, and no need to hand-maintain a lookup
+table (the previous approach, viable only for the ~20-listing curated
+fixture, doesn't scale to the full ~22k-listing dataset spanning ~4k
+distinct zips across data/*.parquet). This satisfies FR-5/FR-15: distance
+is computed from real coordinates, but there is still no live/network
+geocoding of the free-text query -- resolution is a lookup against this
+bundled static dataset.
 """
 
 from __future__ import annotations
 
-# zip -> (lat, lon), city-level approximation.
-ZIP_COORDS: dict[str, tuple[float, float]] = {
-    # Chicago metro
-    "60201": (42.0451, -87.6877),  # Evanston, IL
-    "60453": (41.7198, -87.7581),  # Oak Lawn, IL
-    "60173": (42.0334, -88.0834),  # Schaumburg, IL
-    "60126": (41.8994, -87.9403),  # Elmhurst, IL
-    "60610": (41.9038, -87.6355),  # Chicago, IL
-    "60540": (41.7508, -88.1535),  # Naperville, IL
-    "60504": (41.7466, -88.2262),  # Aurora, IL
-    "60515": (41.8089, -87.9987),  # Downers Grove, IL
-    "60099": (42.4467, -87.8323),  # Zion, IL
-    "60010": (42.1536, -88.1367),  # Barrington, IL
-    "61107": (42.2917, -89.0217),  # Rockford, IL (~75mi from Chicago)
-    # Farther away (other states)
-    "45251": (39.2431, -84.5836),  # Cincinnati, OH
-    "40218": (38.2009, -85.6602),  # Louisville, KY
-    "44094": (41.6431, -81.4062),  # Willoughby, OH
-    "78617": (30.1789, -97.7444),  # Austin, TX
-    "91762": (34.0633, -117.6509),  # Ontario, CA
-    "33483": (26.4615, -80.0728),  # Delray Beach, FL
-    "90211": (34.0669, -118.4008),  # Beverly Hills, CA
-    "07036": (40.6220, -74.2446),  # Linden, NJ
-    "66720": (37.6795, -95.4522),  # Chanute, KS
-    "75067": (33.0462, -96.9942),  # Lewisville, TX
-    "55906": (44.0121, -92.4802),  # Rochester, MN
-}
+import re
+from functools import lru_cache
 
-# Named locations a free-text query might mention. Chicago is the flagship
-# hub city (see US-004); the others give resolve_location somewhere sensible
-# to land for out-of-radius/other-state queries.
-NAMED_LOCATIONS: dict[str, tuple[float, float]] = {
-    "chicago": (41.8781, -87.6298),
-    "chicago, il": (41.8781, -87.6298),
-    "chicago il": (41.8781, -87.6298),
-    "evanston": ZIP_COORDS["60201"],
-    "oak lawn": ZIP_COORDS["60453"],
-    "schaumburg": ZIP_COORDS["60173"],
-    "elmhurst": ZIP_COORDS["60126"],
-    "naperville": ZIP_COORDS["60540"],
-    "aurora": ZIP_COORDS["60504"],
-    "downers grove": ZIP_COORDS["60515"],
-    "zion": ZIP_COORDS["60099"],
-    "barrington": ZIP_COORDS["60010"],
-    "rockford": ZIP_COORDS["61107"],
-    "cincinnati": ZIP_COORDS["45251"],
-    "louisville": ZIP_COORDS["40218"],
-    "willoughby": ZIP_COORDS["44094"],
-    "austin": ZIP_COORDS["78617"],
-    "ontario": ZIP_COORDS["91762"],
-    "ontario, ca": ZIP_COORDS["91762"],
-    "delray beach": ZIP_COORDS["33483"],
-    "beverly hills": ZIP_COORDS["90211"],
-    "linden": ZIP_COORDS["07036"],
-    "chanute": ZIP_COORDS["66720"],
-    "lewisville": ZIP_COORDS["75067"],
-    "rochester": ZIP_COORDS["55906"],
-    "rochester, mn": ZIP_COORDS["55906"],
-}
+import zipcodes as _zipcodes
 
 DEFAULT_RADIUS_MI = 50
+
+_ZIP_LIKE = re.compile(r"^[\d-]+$")
+
+
+@lru_cache(maxsize=4096)
+def zip_to_coords(zip_code: str) -> tuple[float, float] | None:
+    """Look up a zip code's (lat, lon), or None if it's not a recognized US zip."""
+    zip_code = zip_code.strip()
+    if not _ZIP_LIKE.match(zip_code):
+        return None
+    matches = _zipcodes.matching(zip_code)  # type: ignore[no-untyped-call]
+    if not matches:
+        return None
+    entry = matches[0]
+    lat, lon = entry.get("lat"), entry.get("long")
+    if lat is None or lon is None:
+        return None
+    return float(lat), float(lon)
+
+
+@lru_cache(maxsize=1024)
+def _city_to_coords(city: str, state: str | None) -> tuple[float, float] | None:
+    filters: dict[str, str] = {"city": city.title()}
+    if state:
+        filters["state"] = state.upper()
+    matches = _zipcodes.filter_by(**filters)  # type: ignore[no-untyped-call]
+    by_state: dict[str, list[tuple[float, float]]] = {}
+    for m in matches:
+        if m.get("lat") is None or m.get("long") is None:
+            continue
+        by_state.setdefault(m["state"], []).append((float(m["lat"]), float(m["long"])))
+    if not by_state:
+        return None
+    # Same city name can exist in multiple states (e.g. "Beverly Hills" in
+    # both CA and FL). With no state given, disambiguate by picking the
+    # state with the most zips under that city name (a rough size/
+    # prominence proxy) rather than averaging across unrelated regions.
+    coords = max(by_state.values(), key=len)
+    lat = sum(c[0] for c in coords) / len(coords)
+    lon = sum(c[1] for c in coords) / len(coords)
+    return lat, lon
 
 
 def resolve_location(location: str) -> tuple[float, float] | None:
     """Resolve free-text location to (lat, lon), or None if unresolvable.
 
-    Tries an exact zip-code match first, then a case-insensitive lookup
-    against NAMED_LOCATIONS (matching on the whole string or its
-    comma-separated city part). No network geocoding is ever performed.
+    Tries an exact zip-code match first, then a city[, state] lookup
+    (e.g. "Chicago", "Naperville, IL", "Aurora IL"). No network geocoding
+    is ever performed -- everything comes from the bundled `zipcodes`
+    dataset.
     """
     text = location.strip()
     if not text:
         return None
 
-    if text in ZIP_COORDS:
-        return ZIP_COORDS[text]
+    zip_coords = zip_to_coords(text)
+    if zip_coords is not None:
+        return zip_coords
 
-    normalized = text.lower()
-    if normalized in NAMED_LOCATIONS:
-        return NAMED_LOCATIONS[normalized]
+    parts = [p.strip() for p in text.replace(",", " ").split()]
+    if not parts:
+        return None
 
-    city_part = normalized.split(",")[0].strip()
-    if city_part in NAMED_LOCATIONS:
-        return NAMED_LOCATIONS[city_part]
+    # Last token might be a two-letter state code (e.g. "Aurora IL").
+    state = None
+    city_parts = parts
+    if len(parts[-1]) == 2 and parts[-1].isalpha():
+        state = parts[-1]
+        city_parts = parts[:-1]
+    if not city_parts:
+        return None
 
+    city = " ".join(city_parts)
+    coords = _city_to_coords(city, state)
+    if coords is not None:
+        return coords
+    if state is not None:
+        # Retry without the (possibly misparsed) state token.
+        return _city_to_coords(" ".join(parts), None)
     return None

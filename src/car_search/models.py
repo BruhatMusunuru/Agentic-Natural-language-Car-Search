@@ -7,6 +7,7 @@ scripts/curate_seed_listings.py / src/car_search/data/seed_listings.json).
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict
@@ -26,13 +27,19 @@ class BodyType(str, Enum):
 
 
 class FuelType(str, Enum):
-    """Matches the source data's actual `fuelType` values."""
+    """Matches the source data's actual `fuelType` values.
+
+    Values are drawn from scanning every daily file in data/*.parquet, not
+    just the single day the MVP was originally curated from -- Hydrogen is
+    rare (3 rows across the whole dataset) but real.
+    """
 
     GASOLINE = "Gasoline"
     DIESEL = "Diesel"
     HYBRID = "Hybrid Gas/Electric"
     FLEXIBLE_FUEL = "Flexible Fuel"
     ELECTRIC = "Electric"
+    HYDROGEN = "Hydrogen"
 
 
 class SearchFilters(BaseModel):
@@ -58,7 +65,8 @@ class SearchFilters(BaseModel):
 
 
 class Listing(BaseModel):
-    """A single curated inventory listing (see US-001)."""
+    """A single inventory listing (from either the curated test fixture or
+    a live query against the full dataset -- see US-001 and dataset.py)."""
 
     id: str
     make: str
@@ -71,3 +79,13 @@ class Listing(BaseModel):
     city: str
     state: str
     zip: str
+
+
+@dataclass
+class FilterResult:
+    """Result of matching listings against SearchFilters: the AND-combined
+    matches, plus how many listings each individual filter field alone
+    would exclude (see search.py::filter_listings, dataset.py::search_full_dataset)."""
+
+    matches: list[Listing]
+    excluded_by: dict[str, int] = field(default_factory=dict)

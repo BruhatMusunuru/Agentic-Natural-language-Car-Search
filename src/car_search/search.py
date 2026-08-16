@@ -1,23 +1,29 @@
-"""Deterministic filtering of the curated inventory against SearchFilters.
+"""Deterministic filtering against SearchFilters.
 
 `filter_listings` is the pure, plain-Python matching logic (no LLM
-involvement) -- it applies each provided filter field as an AND condition
-and reports, per field, how many listings that single field alone would
-exclude. `search_listings` is the `@tool`-wrapped entry point an Agent can
-call; it delegates to `filter_listings` and returns just the matches.
+involvement) over an explicit in-memory list of Listing objects -- it
+applies each provided filter field as an AND condition and reports, per
+field, how many listings that single field alone would exclude. It's kept
+around as a fast, dependency-light reference implementation, used against
+the small curated test fixture (see inventory.py) in unit tests.
+
+`search_listings` is the `@tool`-wrapped entry point an Agent calls; in
+production it delegates to dataset.py's DuckDB-backed
+`search_full_dataset`, which applies the exact same filtering semantics
+but against the *entire* real dataset (data/*.parquet) without loading it
+into Python memory (see dataset.py for why/how).
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 
 from strands import tool
 
+from car_search.dataset import search_full_dataset
 from car_search.distance import haversine_miles
-from car_search.inventory import load_listings
-from car_search.locations import DEFAULT_RADIUS_MI, ZIP_COORDS, resolve_location
-from car_search.models import Listing, SearchFilters
+from car_search.locations import DEFAULT_RADIUS_MI, resolve_location, zip_to_coords
+from car_search.models import FilterResult, Listing, SearchFilters
 
 # Order matches the relaxation order used elsewhere (US-006): radius_mi is
 # grouped with location since they're a single filter dimension.
@@ -31,12 +37,6 @@ FILTER_FIELDS = (
     "fuel_type",
     "radius_mi",
 )
-
-
-@dataclass
-class FilterResult:
-    matches: list[Listing]
-    excluded_by: dict[str, int] = field(default_factory=dict)
 
 
 def _passes_make(listing: Listing, filters: SearchFilters) -> bool:
@@ -72,17 +72,17 @@ def _passes_radius(
 ) -> bool:
     if filters.location is None or origin is None:
         return True
-    listing_coords = ZIP_COORDS.get(listing.zip)
+    listing_coords = zip_to_coords(listing.zip)
     if listing_coords is None:
-        # Can't evaluate distance for a listing outside the static lookup;
-        # don't silently exclude it.
+        # Can't evaluate distance for a listing whose zip isn't a
+        # recognized US zip; don't silently exclude it.
         return True
     radius = filters.radius_mi if filters.radius_mi is not None else DEFAULT_RADIUS_MI
     return haversine_miles(origin, listing_coords) <= radius
 
 
 def filter_listings(listings: list[Listing], filters: SearchFilters) -> FilterResult:
-    """Apply every provided filter field as an AND condition.
+    """Apply every provided filter field as an AND condition, in memory.
 
     Returns the AND-combined matches plus, for each field independently,
     the count of listings that field alone would exclude (regardless of
@@ -119,11 +119,11 @@ def filter_listings(listings: list[Listing], filters: SearchFilters) -> FilterRe
 
 @tool
 def search_listings(filters: SearchFilters) -> list[Listing]:
-    """Deterministically filter the curated car inventory against SearchFilters.
+    """Deterministically filter the real car inventory against SearchFilters.
 
     Applies each provided field (make, model, body_type, price_max,
     mileage_max, year_min, fuel_type, location+radius_mi) as an AND
-    condition against the curated seed inventory. No LLM calls happen
-    inside this tool -- matching is plain Python.
+    condition against the full dataset (data/*.parquet). No LLM calls
+    happen inside this tool -- matching is plain SQL executed by DuckDB.
     """
-    return filter_listings(list(load_listings()), filters).matches
+    return search_full_dataset(filters).matches

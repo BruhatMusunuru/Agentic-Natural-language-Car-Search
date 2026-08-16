@@ -1,5 +1,5 @@
 from car_search.inventory import load_listings
-from car_search.locations import ZIP_COORDS
+from car_search.locations import zip_to_coords
 
 
 def test_loads_curated_fixture() -> None:
@@ -23,7 +23,7 @@ def test_wide_price_spread() -> None:
 def test_every_listing_zip_has_a_coordinate() -> None:
     listings = load_listings()
     for listing in listings:
-        assert listing.zip in ZIP_COORDS
+        assert zip_to_coords(listing.zip) is not None
 
 
 def test_chicago_area_low_mileage_affordable_suv_cluster_exists() -> None:

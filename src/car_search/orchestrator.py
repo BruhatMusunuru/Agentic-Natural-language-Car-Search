@@ -14,11 +14,11 @@ from pydantic import BaseModel
 
 from car_search.agent import ask_clarifying_question, extract_filters, needs_clarification
 from car_search.config import TOP_K
+from car_search.dataset import search_full_dataset
 from car_search.explanation import build_explanation
 from car_search.guardrails import detect_contradiction
-from car_search.inventory import load_listings
 from car_search.models import Listing, SearchFilters
-from car_search.relaxation import relax_and_search
+from car_search.relaxation import SearchFn, relax_and_search
 
 ExtractFn = Callable[[str], SearchFilters]
 ClarifyFn = Callable[[str], str]
@@ -45,6 +45,7 @@ def run_search(
     *,
     extract_fn: ExtractFn = extract_filters,
     clarify_fn: ClarifyFn = ask_clarifying_question,
+    search_fn: SearchFn = search_full_dataset,
     skip_clarify: bool = False,
 ) -> SearchResponse:
     """Run the full query -> results pipeline.
@@ -66,8 +67,7 @@ def run_search(
             clarifying_question=question,
         )
 
-    listings = list(load_listings())
-    result, _final_filters, steps = relax_and_search(listings, filters)
+    result, _final_filters, steps = relax_and_search(filters, search_fn)
     ranked = rank_and_cap(result.matches)
     explanation = build_explanation(filters, ranked, steps, contradiction_note)
 

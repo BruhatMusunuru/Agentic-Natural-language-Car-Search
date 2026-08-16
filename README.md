@@ -2,14 +2,16 @@
 
 Natural-language car search: turn a free-text query (e.g. *"reliable family
 SUV under $30k, low mileage, near Chicago"*) into structured search filters
-via an LLM agent, deterministically filter a curated, real car inventory
-against them in plain Python, and return the top matches with a grounded
-explanation.
+via an LLM agent, deterministically filter the **entire real car
+inventory** (~22k listings across `data/*.parquet`) against them via SQL,
+and return the top matches with a grounded explanation.
 
 Built with [AWS Strands Agents](https://strandsagents.com/) for
-orchestration and the Anthropic API as the model provider. Runs entirely
-locally — no database, no deployment, no auth — with nothing but a Strands
-install and an `ANTHROPIC_API_KEY`.
+orchestration, the Anthropic API as the model provider, and
+[DuckDB](https://duckdb.org/) for out-of-core querying of the full dataset
+(no need to hold it all in memory). Runs entirely locally — no database
+server, no deployment, no auth — with nothing but a Strands install and an
+`ANTHROPIC_API_KEY`.
 
 ## Setup
 
@@ -115,49 +117,68 @@ or a behavior check falls short — useful for CI.
 
 ## About the data
 
-The seed inventory (`src/car_search/data/seed_listings.json`, 26 listings)
-is **curated from real rows** in `data/2026-07-01.csv` — a MarketCheck-style
-US car-listing export — not synthetic/fabricated data. See
-`scripts/curate_seed_listings.py` for the exact, reproducible selection
-(hardcoded real `listingId`s with a comment on why each was picked). The
-service loads this checked-in fixture once at startup; it never re-reads the
-raw CSV/parquet files at runtime.
+Search runs against the **entire** real dataset in `data/*.parquet` — every
+daily MarketCheck-style export snapshot (30 files, ~22k listings after
+data-quality filtering), not a hand-picked subset. `dataset.py` queries the
+parquet files directly through [DuckDB](https://duckdb.org/), an embedded
+OLAP engine: every filter (make/model/body/price/mileage/year/fuel, and
+location+radius via a SQL haversine expression) is pushed down into a
+vectorized SQL scan, so the service never loads the ~22k-row dataset into
+Python objects/memory — only the handful of rows that actually match a
+search get materialized. A search across the whole dataset takes well
+under 200ms once DuckDB's connection is warm.
 
 Two data-shape decisions worth knowing about:
 
 - **Price**: `salePrice` and `kbbFairPurchasePrice` are gated (`"[PREMIUM]"`)
   in every row of the source export, so there's no usable per-listing sale
   price anywhere in the data. `kbbFairPriceHigh` (a real KBB fair-price
-  band) is used as each listing's effective `price` throughout.
+  band) is used as each listing's effective `price` throughout. Rows with
+  `kbbFairPriceHigh <= 0` (a "missing price" sentinel — ~5.8% of otherwise-
+  qualifying rows, with a clean gap before the next-lowest real price of
+  ~$1,680) are excluded as data-quality noise, the same way `[PREMIUM]`/
+  empty values are.
 - **Location**: the source data has no `lat`/`lon` columns, only
-  `sellerCity`/`sellerState`/`sellerZip`. Radius search uses a small,
-  hardcoded `zip -> (lat, lon)` lookup (city-level approximation, sourced
-  from public city coordinates) covering exactly the zips present in the
-  curated fixture — there is no live/network geocoding.
+  `sellerCity`/`sellerState`/`sellerZip` (~4k distinct zips across the full
+  dataset — too many to hand-maintain). `locations.py` resolves zips and
+  city names via the [`zipcodes`](https://pypi.org/project/zipcodes/)
+  package, which bundles a complete offline US zip-code dataset (~43k
+  zips, ~1.9MB) — no network geocoding call, ever. Ambiguous city names
+  (e.g. "Beverly Hills" exists in both CA and FL) resolve to whichever
+  state has more zips under that name, rather than averaging across
+  unrelated regions.
+
+The small curated fixture (`src/car_search/data/seed_listings.json`, 26
+hand-picked real rows, built by `scripts/curate_seed_listings.py`) is no
+longer the production data source — it's kept checked in purely so the
+unit test suite has a small, fast, dependency-light dataset to test
+`search.py`'s reference filtering logic against without needing DuckDB/
+parquet I/O for every test.
 
 ## Project layout
 
 ```
 src/car_search/
-  models.py         SearchFilters / Listing pydantic models (+ enums)
-  inventory.py       loads the curated seed fixture
-  locations.py       static zip -> (lat, lon) lookup + free-text resolution
-  distance.py         haversine distance in miles
-  search.py           deterministic filter_listings + @tool search_listings
-  guardrails.py       synonym mapping, price-shorthand normalization,
-                       contradiction detection, defensive enum parsing
-  relaxation.py        zero-result auto-relax (US-006)
-  explanation.py        grounded, deterministic explanation template
-  agent.py               Strands Agent wiring (extraction + clarify sub-agent)
-  orchestrator.py         run_search: ties it all together
-  server.py                 FastAPI POST /search
+  models.py         SearchFilters / Listing / FilterResult pydantic+dataclass models
+  dataset.py          DuckDB-backed out-of-core query engine over data/*.parquet (production)
+  inventory.py         loads the small curated fixture (tests only, see "About the data")
+  locations.py           zip/city -> (lat, lon) resolution via the zipcodes package
+  distance.py               haversine distance in miles
+  search.py                   filter_listings (in-memory reference impl) + @tool search_listings
+  guardrails.py                synonym mapping, price-shorthand normalization,
+                                contradiction detection, defensive enum parsing
+  relaxation.py                 zero-result auto-relax (US-006), backend-agnostic (search_fn)
+  explanation.py                 grounded, deterministic explanation template
+  agent.py                        Strands Agent wiring (extraction + clarify sub-agent)
+  orchestrator.py                  run_search: ties it all together
+  server.py                          FastAPI POST /search
   data/
-    seed_listings.json       curated real inventory (26 listings)
-    golden_set.json            eval golden set
+    seed_listings.json                 curated fixture (test-only, 26 listings)
+    golden_set.json                      eval golden set
 scripts/
-  curate_seed_listings.py     regenerates seed_listings.json from data/2026-07-01.csv
-  eval_golden_set.py           golden-set precision/recall eval
-tests/                          pytest suite (no network calls required)
+  curate_seed_listings.py                regenerates seed_listings.json (test fixture)
+  eval_golden_set.py                       golden-set precision/recall eval
+tests/                                      pytest suite (no network calls required)
 ```
 
 See `tasks/prd-natural-language-car-search.md` for the full PRD.

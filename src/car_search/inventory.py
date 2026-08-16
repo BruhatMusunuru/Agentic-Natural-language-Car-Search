@@ -1,7 +1,13 @@
-"""Loads the curated seed inventory fixture at startup.
+"""Loads the small curated seed inventory fixture (26 hand-picked rows).
 
-The service never re-reads the raw CSV/parquet files at runtime -- only the
-checked-in JSON fixture produced by scripts/curate_seed_listings.py.
+NOTE: this is no longer the production listings source. Real search
+traffic is served from the *entire* dataset via dataset.py's DuckDB-backed
+`search_full_dataset`, which queries data/*.parquet directly without
+loading it into memory. This fixture (produced by
+scripts/curate_seed_listings.py) is kept checked in purely so unit tests
+have a small, fast, dependency-light dataset to exercise
+search.py::filter_listings' reference implementation against, without
+needing DuckDB/parquet I/O for every test.
 """
 
 from __future__ import annotations

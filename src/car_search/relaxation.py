@@ -10,11 +10,13 @@ relaxed.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from car_search.locations import DEFAULT_RADIUS_MI
-from car_search.models import Listing, SearchFilters
-from car_search.search import FilterResult, filter_listings
+from car_search.models import FilterResult, SearchFilters
+
+SearchFn = Callable[[SearchFilters], FilterResult]
 
 # (field name, relaxation multiplier/step description)
 _RELAXATION_ORDER = ("radius_mi", "mileage_max", "price_max", "year_min")
@@ -72,15 +74,23 @@ def _relax_field(field: str, filters: SearchFilters) -> tuple[SearchFilters, Rel
 
 
 def relax_and_search(
-    listings: list[Listing], filters: SearchFilters
+    filters: SearchFilters, search_fn: SearchFn
 ) -> tuple[FilterResult, SearchFilters, list[RelaxationStep]]:
-    """Run filter_listings, auto-relaxing on zero results per US-006.
+    """Run search_fn, auto-relaxing on zero results per US-006.
+
+    search_fn is injectable so relaxation works identically whether it's
+    backed by the full out-of-core dataset (dataset.py::search_full_dataset,
+    the production default) or the small in-memory curated fixture
+    (search.py::filter_listings against inventory.py, used in fast offline
+    tests) -- each relaxation step just re-invokes search_fn with
+    progressively looser filters; it never needs a materialized listings
+    list of its own.
 
     Returns the final FilterResult, the (possibly relaxed) SearchFilters
     used to produce it, and the ordered list of relaxation steps applied
     (empty if no relaxation was needed).
     """
-    result = filter_listings(listings, filters)
+    result = search_fn(filters)
     if result.matches:
         return result, filters, []
 
@@ -92,7 +102,7 @@ def relax_and_search(
             continue
         current_filters, step = relaxed
         steps.append(step)
-        result = filter_listings(listings, current_filters)
+        result = search_fn(current_filters)
         if result.matches:
             return result, current_filters, steps
 

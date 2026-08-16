@@ -18,7 +18,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Curated via scripts/curate_seed_listings.py (hardcoded real listingIds) into src/car_search/data/seed_listings.json (26 rows); zip lookup in src/car_search/locations.py; loader in src/car_search/inventory.py. Verified: 11 tests pass, mypy clean."
+      "notes": "Curated via scripts/curate_seed_listings.py (hardcoded real listingIds) into src/car_search/data/seed_listings.json (26 rows); zip lookup in src/car_search/locations.py; loader in src/car_search/inventory.py. Verified: 11 tests pass, mypy clean.\n\nUPDATE (post-MVP, per explicit user request): production search no longer reads only this curated fixture. dataset.py now queries the FULL dataset (all 30 files in data/*.parquet, ~22k qualifying rows) via DuckDB, out-of-core (no in-memory materialization of the dataset -- only matching rows are built into Listing objects). The curated fixture here is retained solely as a small, fast, offline unit-test dataset for search.py::filter_listings' reference implementation. Zip lookup is now backed by the `zipcodes` open-source package (bundled offline ~43k-zip US dataset) instead of a small hand-maintained dict, since the full dataset spans ~4k distinct zips."
     },
     {
       "id": "US-002",
@@ -52,7 +52,7 @@
       ],
       "priority": 3,
       "passes": true,
-      "notes": "filter_listings (pure, per-field excluded_by counts) + @tool-wrapped search_listings in src/car_search/search.py; haversine in src/car_search/distance.py; free-text location resolution (named locations + zip fallback) in locations.py::resolve_location. Tests in tests/test_search.py. Verified: 23 tests pass, mypy clean, ruff clean."
+      "notes": "filter_listings (pure, per-field excluded_by counts) + @tool-wrapped search_listings in src/car_search/search.py; haversine in src/car_search/distance.py; free-text location resolution (named locations + zip fallback) in locations.py::resolve_location. Tests in tests/test_search.py. Verified: 23 tests pass, mypy clean, ruff clean.\n\nUPDATE (post-MVP, per explicit user request): search_listings (the @tool) now delegates to dataset.py::search_full_dataset, which pushes every filter -- including the location/radius haversine check -- down into a DuckDB SQL query against data/*.parquet, rather than filtering an in-memory curated list. filter_listings (pure, in-memory) is kept as the tested reference implementation used against the small curated fixture in fast offline tests; tests/test_dataset.py covers the full-dataset engine directly."
     },
     {
       "id": "US-004",

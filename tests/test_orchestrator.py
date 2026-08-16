@@ -88,7 +88,10 @@ def test_skip_clarify_forces_best_effort_search_on_followup() -> None:
 
 
 def test_zero_result_query_triggers_relaxation_via_orchestrator() -> None:
-    filters = SearchFilters(body_type=BodyType.WAGON, location="Chicago", radius_mi=20)
+    # Real full-dataset check (see tests/test_dataset.py): 0 WAGONs within
+    # 2mi of Chicago, 1 within 4mi -- engineered to need exactly one
+    # radius_mi-doubling relaxation step.
+    filters = SearchFilters(body_type=BodyType.WAGON, location="Chicago", radius_mi=2)
     response = run_search(
         "wagon near chicago",
         extract_fn=fake_extract(filters),

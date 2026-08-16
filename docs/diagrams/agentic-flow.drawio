@@ -1,0 +1,81 @@
+<mxfile host="app.diagrams.net" agent="car-search-docs" version="24.0.0">
+  <diagram name="Agentic Flow" id="agentic-flow">
+    <mxGraphModel dx="900" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Legend -->
+        <mxCell id="legend" value="Legend: amber = calls the LLM (Anthropic/Bedrock via a Strands Agent). Blue = deterministic (plain Python/SQL, no model call). Dashed edge = data carried through without being a process step." style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="820" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a" value="Client: free-text query" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="60" y="60" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="b" value="POST /search (FastAPI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="60" y="150" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c" value="extract_filters()&#10;Strands Agent: structured output -&gt; SearchFilters" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="60" y="240" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="d" value="apply_synonym_fallback() + apply_price_shorthand_fallback() (regex guardrails)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="60" y="340" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e" value="detect_contradiction(query) (regex, e.g. &quot;electric diesel SUV&quot;)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="60" y="440" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="f" value="needs_clarification(filters)? (none of body_type/make/model/price_max/location set, and not skip_clarify)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="40" y="550" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="g" value="ask_clarifying_question()&#10;Strands clarify sub-agent (agents-as-tools)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="560" y="565" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="h" value="Response: clarifying_question set, results = [] -- search never runs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="560" y="665" width="240" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="i" value="relax_and_search(): search_full_dataset(filters) -- DuckDB SQL over data/*.parquet (out-of-core, no full in-memory load)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="260" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="j" value="zero results?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="80" y="810" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="k" value="Relax one field, cumulative: radius_mi -&gt; mileage_max -&gt; price_max -&gt; year_min (stop at first success)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="340" y="810" width="240" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="l" value="rank_and_cap(): sort price asc, mileage asc, year desc -- cap top 5" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="40" y="930" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="m" value="build_explanation(): deterministic template grounded in filters + results + relaxation steps + contradiction_note" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1030" width="260" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="n" value="Response: filters, results, explanation, relaxed_fields" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1140" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="o" value="Client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="300" y="1250" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_ab" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="a" target="b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_bc" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="b" target="c"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_cd" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="c" target="d"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_de" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="d" target="e"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_ef" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="e" target="f"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_fg" value="yes" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="f" target="g"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_gh" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="g" target="h"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_fi" value="no" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="f" target="i"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_ij" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="i" target="j"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_jk" value="yes, field still relaxable" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="j" target="k"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_ki" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="k" target="i"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_jl" value="no" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="j" target="l"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_lm" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="l" target="m"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_em" value="contradiction_note carried through" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;" edge="1" parent="1" source="e" target="m"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_mn" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="m" target="n"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_ho" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="h" target="o"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_no" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="n" target="o"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

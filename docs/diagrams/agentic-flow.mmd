@@ -1,0 +1,32 @@
+%% Agentic flow: POST /search -> response, matching
+%% src/car_search/orchestrator.py::run_search exactly.
+%%
+%% Legend:
+%%   Amber nodes  = calls the LLM (Anthropic/Bedrock model via a Strands
+%%                  Agent). There are exactly two: filter extraction and
+%%                  the clarify sub-agent.
+%%   Blue nodes   = deterministic: plain Python or SQL, no model call,
+%%                  same output every time for the same input.
+%% The clarify path (right branch) short-circuits straight to a response
+%% and never reaches search_full_dataset.
+flowchart TD
+    A["Client: free-text query"] --> B["POST /search (FastAPI)"]
+    B --> C["extract_filters()<br/>Strands Agent: structured output<br/>-> SearchFilters"]:::llm
+    C --> D["apply_synonym_fallback() +<br/>apply_price_shorthand_fallback()<br/>(regex guardrail fallbacks)"]:::deterministic
+    D --> E["detect_contradiction(query)<br/>(regex, e.g. 'electric diesel SUV')"]:::deterministic
+    E --> F{"needs_clarification(filters)?<br/>none of body_type/make/model/<br/>price_max/location set,<br/>and not skip_clarify"}:::deterministic
+    F -- "yes" --> G["ask_clarifying_question()<br/>Strands clarify sub-agent<br/>(agents-as-tools)"]:::llm
+    G --> H["Response: clarifying_question set,<br/>results = [] -- search never runs"]:::deterministic
+    F -- "no" --> I["relax_and_search()<br/>search_full_dataset(filters):<br/>DuckDB SQL over data/*.parquet<br/>(out-of-core, no full in-memory load)"]:::deterministic
+    I --> J{"zero results?"}:::deterministic
+    J -- "yes, and a field<br/>is still relaxable" --> K["Relax one field, cumulative:<br/>radius_mi -> mileage_max -><br/>price_max -> year_min<br/>(stop at first success)"]:::deterministic
+    K --> I
+    J -- "no" --> L["rank_and_cap()<br/>sort: price asc, mileage asc,<br/>year desc -- cap top 5"]:::deterministic
+    L --> M["build_explanation()<br/>deterministic template grounded in<br/>filters + results + relaxation steps<br/>+ contradiction_note"]:::deterministic
+    E -. "contradiction_note<br/>carried through" .-> M
+    M --> N["Response: filters, results,<br/>explanation, relaxed_fields"]:::deterministic
+    H --> O["Client"]
+    N --> O
+
+    classDef llm fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f
+    classDef deterministic fill:#dbeafe,stroke:#2563eb,stroke-width:1px,color:#1e3a8a

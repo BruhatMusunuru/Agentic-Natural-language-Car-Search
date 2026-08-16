@@ -5,8 +5,8 @@ DuckDB -- no network calls, no full in-memory materialization of the
 dataset, and no LLM involved.
 """
 
-from car_search.dataset import dataset_row_count, search_full_dataset
-from car_search.models import BodyType, FuelType, SearchFilters
+from car_search.core import BodyType, FuelType, SearchFilters
+from car_search.search import dataset_row_count, search_full_dataset
 
 
 def test_dataset_row_count_covers_the_whole_export() -> None:

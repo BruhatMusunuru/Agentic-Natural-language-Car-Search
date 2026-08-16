@@ -1,5 +1,5 @@
-from car_search.inventory import load_listings
-from car_search.locations import zip_to_coords
+from car_search.data import load_listings
+from car_search.geo import zip_to_coords
 
 
 def test_loads_curated_fixture() -> None:

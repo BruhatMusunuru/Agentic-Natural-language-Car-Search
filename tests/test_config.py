@@ -1,6 +1,6 @@
 import pytest
 
-from car_search.config import require_api_key
+from car_search.core import require_api_key
 
 
 def test_require_api_key_returns_value_when_set(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -7,8 +7,8 @@ contradiction -- never freely invented by an LLM.
 
 from __future__ import annotations
 
-from car_search.models import Listing, SearchFilters
-from car_search.relaxation import RelaxationStep
+from car_search.core import Listing, SearchFilters
+from car_search.search.relaxation import RelaxationStep
 
 
 def _describe_filters(filters: SearchFilters) -> list[str]:

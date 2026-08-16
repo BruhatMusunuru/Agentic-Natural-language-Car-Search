@@ -1,5 +1,5 @@
-from car_search.inventory import load_listings
-from car_search.models import BodyType, FuelType, Listing, SearchFilters
+from car_search.core import BodyType, FuelType, Listing, SearchFilters
+from car_search.data import load_listings
 from car_search.search import filter_listings, search_listings
 
 

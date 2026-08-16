@@ -1,5 +1,5 @@
-from car_search.inventory import load_listings
-from car_search.models import BodyType, SearchFilters
+from car_search.core import BodyType, SearchFilters
+from car_search.data import load_listings
 from car_search.orchestrator import ClarifyFn, ExtractFn, rank_and_cap, run_search
 
 

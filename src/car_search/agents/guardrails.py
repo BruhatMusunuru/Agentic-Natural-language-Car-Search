@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from car_search.models import BodyType, FuelType, SearchFilters
+from car_search.core import BodyType, FuelType, SearchFilters
 
 # Natural-language synonym -> real enum code (US-008).
 BODY_TYPE_SYNONYMS: dict[str, BodyType] = {

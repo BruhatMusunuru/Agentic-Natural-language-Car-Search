@@ -16,9 +16,9 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from car_search.models import Listing
+from car_search.core import Listing
 
-SEED_LISTINGS_PATH = Path(__file__).resolve().parent / "data" / "seed_listings.json"
+SEED_LISTINGS_PATH = Path(__file__).resolve().parent / "seed_listings.json"
 
 
 @lru_cache(maxsize=1)

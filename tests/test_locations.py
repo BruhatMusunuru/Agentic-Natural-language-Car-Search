@@ -1,4 +1,4 @@
-from car_search.locations import resolve_location, zip_to_coords
+from car_search.geo import resolve_location, zip_to_coords
 
 
 def test_zip_to_coords_resolves_known_zip() -> None:

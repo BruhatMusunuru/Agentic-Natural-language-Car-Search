@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from car_search.models import BodyType, SearchFilters
+from car_search.api.server import app
+from car_search.core import BodyType, SearchFilters
 from car_search.orchestrator import run_search
-from car_search.server import app
 
 client = TestClient(app)
 

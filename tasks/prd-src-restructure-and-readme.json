@@ -1,0 +1,157 @@
+{
+  "project": "Car Search Service",
+  "branchName": "ralph/src-restructure-and-readme",
+  "description": "Restructure src/car_search into cohesive subpackages (core, geo, data, search, agents, api) with orchestrator.py staying at the top level as the cross-cutting use-case layer, plus a rewritten crisp README with the architecture diagram inlined and deep-dive content moved to docs/layout.md and docs/data.md. Pure internal reorganization + docs -- no behavior change.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "core subpackage (models, config)",
+      "description": "As a developer, I want models.py and config.py in a core subpackage so the two modules everything else depends on are clearly identified as the foundation layer.",
+      "acceptanceCriteria": [
+        "models.py and config.py moved to src/car_search/core/models.py and src/car_search/core/config.py",
+        "src/car_search/core/__init__.py re-exports SearchFilters, Listing, BodyType, FuelType, FilterResult (from models) and TOP_K, get_model_id, get_max_tokens, require_api_key (from config)",
+        "Every import of car_search.models / car_search.config across src/, tests/, and scripts/ updated to the new path (car_search.core or car_search.core.models/car_search.core.config) -- grep -rn \"from car_search.models\\|from car_search.config\\|car_search\\.models\\|car_search\\.config\" src tests scripts returns no hits outside core/ itself",
+        "uv run pytest passes",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "geo subpackage (locations, distance)",
+      "description": "As a developer, I want the zip-resolution and haversine-distance code in a geo subpackage since they're a self-contained concern with no dependency on anything else in the codebase.",
+      "acceptanceCriteria": [
+        "locations.py and distance.py moved to src/car_search/geo/locations.py and src/car_search/geo/distance.py",
+        "src/car_search/geo/__init__.py re-exports resolve_location, zip_to_coords, DEFAULT_RADIUS_MI (from locations) and haversine_miles (from distance)",
+        "Every import of car_search.locations / car_search.distance across src/, tests/, and scripts/ updated -- grep for the old paths returns no hits outside geo/",
+        "uv run pytest passes",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "data subpackage (inventory + fixtures)",
+      "description": "As a developer, I want the curated-fixture loader colocated with the fixture files it loads, in a data subpackage.",
+      "acceptanceCriteria": [
+        "inventory.py moved to src/car_search/data/inventory.py; seed_listings.json and golden_set.json (already at src/car_search/data/) stay in place",
+        "SEED_LISTINGS_PATH in the moved inventory.py updated to Path(__file__).resolve().parent / \"seed_listings.json\" (no longer .parent / \"data\" / \"seed_listings.json\" -- __file__'s parent is now the data directory itself, not its parent)",
+        "src/car_search/data/__init__.py re-exports load_listings",
+        "Every import of car_search.inventory across src/, tests/, and scripts/ updated -- grep for the old path returns no hits outside data/",
+        "uv run pytest confirms load_listings() still finds and loads seed_listings.json correctly (i.e. the path fix in the second bullet actually works, not just typechecks) -- add or reuse a test that calls load_listings() and asserts a nonzero result",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "search subpackage (dataset, search, relaxation, explanation)",
+      "description": "As a developer, I want every deterministic-search-related module (the DuckDB engine, the in-memory reference filter, zero-result relaxation, and explanation generation) grouped under search/.",
+      "acceptanceCriteria": [
+        "dataset.py, search.py, relaxation.py, explanation.py moved to src/car_search/search/",
+        "DATA_GLOB in the moved dataset.py (built from Path(__file__).resolve().parent.parent.parent) re-verified/updated to still resolve to the repo-root data/ directory correctly from its new location (one extra level of nesting)",
+        "src/car_search/search/__init__.py re-exports search_listings, filter_listings, FILTER_FIELDS, search_full_dataset, dataset_row_count, relax_and_search, RelaxationStep, SearchFn, build_explanation",
+        "Every import of car_search.dataset / car_search.search / car_search.relaxation / car_search.explanation across src/, tests/, and scripts/ updated -- grep for the old paths returns no hits outside search/",
+        "uv run pytest passes",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "agents subpackage (agent, guardrails)",
+      "description": "As a developer, I want the Strands agent wiring and the extraction guardrails grouped under agents/, since guardrails exist specifically to make agent output trustworthy.",
+      "acceptanceCriteria": [
+        "agent.py and guardrails.py moved to src/car_search/agents/",
+        "src/car_search/agents/__init__.py re-exports extract_filters, ask_clarifying_question, needs_clarification, build_extraction_agent, build_clarify_agent, build_model (from agent) and detect_contradiction, apply_synonym_fallback, apply_price_shorthand_fallback, safe_parse_search_filters (from guardrails)",
+        "Every import of car_search.agent / car_search.guardrails across src/, tests/, and scripts/ updated -- grep for the old paths returns no hits outside agents/",
+        "uv run pytest passes",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "api subpackage (server) + entry point",
+      "description": "As a developer, I want the FastAPI app in its own api/ subpackage, with the console-script entry point updated to match.",
+      "acceptanceCriteria": [
+        "server.py moved to src/car_search/api/server.py",
+        "src/car_search/api/__init__.py re-exports app",
+        "Top-level src/car_search/__init__.py's main() updated to run \"car_search.api.server:app\" (was \"car_search.server:app\")",
+        "uv run car-search still starts the server successfully (manual verification: start it, confirm it's listening, stop it)",
+        "uv run pytest passes",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "orchestrator.py import fixes + top-level __init__.py public API",
+      "description": "As a developer, I want orchestrator.py's imports updated to the new subpackage paths, and the top-level __init__.py to re-export the handful of names most callers actually need, so orchestrator.py and the package root are the last pieces wired up correctly.",
+      "acceptanceCriteria": [
+        "orchestrator.py stays at src/car_search/orchestrator.py (not moved into any subpackage -- it's cross-cutting, importing from agents, search, and core)",
+        "orchestrator.py's imports updated to the new paths (car_search.agents, car_search.search, car_search.core)",
+        "Top-level src/car_search/__init__.py re-exports SearchResponse, run_search (from orchestrator) in addition to main",
+        "uv run pytest passes",
+        "uv run mypy passes",
+        "uv run ruff check . passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "End-to-end smoke verification",
+      "description": "As a developer, I want to confirm the restructured package actually works at runtime, not just at the type/unit-test level, since import-path mistakes can pass mypy/pytest yet still break real startup.",
+      "acceptanceCriteria": [
+        "Fresh uv sync succeeds with no errors",
+        "uv run car-search starts successfully; curl -X POST http://127.0.0.1:8000/search -d '{\"query\": \"reliable family SUV under $30k, low mileage, near Chicago\"}' returns a 200 with real results (manual verification, live Anthropic API call)",
+        "curl -X POST .../search -d '{}' returns a 4xx",
+        "uv run python scripts/eval_golden_set.py runs without import errors (manual verification; live API call, don't need to check the score)",
+        "Full test suite (uv run pytest) passes one final time with the complete restructured tree",
+        "uv run mypy passes one final time with the complete restructured tree",
+        "uv run ruff check . passes one final time with the complete restructured tree"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Crisp README with inlined architecture diagram",
+      "description": "As a new developer, I want a short, scannable README that shows me the architecture at a glance and gets me running quickly, with deeper detail one click away instead of inline.",
+      "acceptanceCriteria": [
+        "New docs/layout.md contains the full project-layout tree (the content currently in README's \"Project layout\" section), updated to reflect the US-001 through US-007 restructuring",
+        "New docs/data.md contains the data-shape decisions writeup (the content currently in README's \"About the data\" section: price/kbbFairPriceHigh reasoning, zip-lookup-via-zipcodes-package reasoning, the curated-fixture-is-test-only note)",
+        "README.md rewritten to: one short pitch paragraph, setup (uv sync + ANTHROPIC_API_KEY), run + one curl example, test/lint/eval commands, and a new \"Architecture\" section",
+        "The \"Architecture\" section inlines arch_diagram.png (![Architecture](arch_diagram.png)) and links to docs/diagrams/ (for the Mermaid/draw.io sources and per-diagram legends), docs/layout.md, and docs/data.md",
+        "README stays under roughly 100 lines (down from the current ~184)",
+        "Every command shown in the trimmed README (uv sync, uv run car-search, the curl example, uv run pytest, uv run mypy, uv run ruff check ., uv run python scripts/eval_golden_set.py) still works exactly as written, verified by actually running each one",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    }
+
+  ]
+}

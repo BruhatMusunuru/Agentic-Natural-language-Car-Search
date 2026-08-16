@@ -12,13 +12,14 @@ from collections.abc import Callable
 
 from pydantic import BaseModel
 
-from car_search.agent import ask_clarifying_question, extract_filters, needs_clarification
-from car_search.config import TOP_K
-from car_search.dataset import search_full_dataset
-from car_search.explanation import build_explanation
-from car_search.guardrails import detect_contradiction
-from car_search.models import Listing, SearchFilters
-from car_search.relaxation import SearchFn, relax_and_search
+from car_search.agents import (
+    ask_clarifying_question,
+    detect_contradiction,
+    extract_filters,
+    needs_clarification,
+)
+from car_search.core import TOP_K, Listing, SearchFilters
+from car_search.search import SearchFn, build_explanation, relax_and_search, search_full_dataset
 
 ExtractFn = Callable[[str], SearchFilters]
 ClarifyFn = Callable[[str], str]

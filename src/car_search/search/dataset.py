@@ -25,10 +25,10 @@ from pathlib import Path
 import duckdb
 import zipcodes as _zipcodes
 
-from car_search.locations import DEFAULT_RADIUS_MI, resolve_location
-from car_search.models import FilterResult, Listing, SearchFilters
+from car_search.core import FilterResult, Listing, SearchFilters
+from car_search.geo import DEFAULT_RADIUS_MI, resolve_location
 
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 DATA_GLOB = str(REPO_ROOT / "data" / "*.parquet")
 
 # Rows must have every field the service actually uses (see US-001's

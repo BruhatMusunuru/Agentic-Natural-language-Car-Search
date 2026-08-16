@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from car_search.models import BodyType, FuelType, SearchFilters
+from car_search.core import BodyType, FuelType, SearchFilters
 
 
 def test_all_fields_optional() -> None:

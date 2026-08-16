@@ -13,8 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from car_search.locations import DEFAULT_RADIUS_MI
-from car_search.models import FilterResult, SearchFilters
+from car_search.core import FilterResult, SearchFilters
+from car_search.geo import DEFAULT_RADIUS_MI
 
 SearchFn = Callable[[SearchFilters], FilterResult]
 

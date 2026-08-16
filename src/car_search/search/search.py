@@ -20,10 +20,9 @@ from collections.abc import Callable
 
 from strands import tool
 
-from car_search.dataset import search_full_dataset
-from car_search.distance import haversine_miles
-from car_search.locations import DEFAULT_RADIUS_MI, resolve_location, zip_to_coords
-from car_search.models import FilterResult, Listing, SearchFilters
+from car_search.core import FilterResult, Listing, SearchFilters
+from car_search.geo import DEFAULT_RADIUS_MI, haversine_miles, resolve_location, zip_to_coords
+from car_search.search.dataset import search_full_dataset
 
 # Order matches the relaxation order used elsewhere (US-006): radius_mi is
 # grouped with location since they're a single filter dimension.

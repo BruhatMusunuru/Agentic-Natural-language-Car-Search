@@ -20,9 +20,8 @@ from __future__ import annotations
 from strands import Agent
 from strands.models.anthropic import AnthropicModel
 
-from car_search.config import get_max_tokens, get_model_id, require_api_key
-from car_search.guardrails import apply_price_shorthand_fallback, apply_synonym_fallback
-from car_search.models import SearchFilters
+from car_search.agents.guardrails import apply_price_shorthand_fallback, apply_synonym_fallback
+from car_search.core import SearchFilters, get_max_tokens, get_model_id, require_api_key
 from car_search.search import search_listings
 
 EXTRACTION_SYSTEM_PROMPT = """\

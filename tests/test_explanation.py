@@ -1,7 +1,6 @@
-from car_search.explanation import build_explanation
-from car_search.inventory import load_listings
-from car_search.models import BodyType, Listing, SearchFilters
-from car_search.relaxation import RelaxationStep
+from car_search.core import BodyType, Listing, SearchFilters
+from car_search.data import load_listings
+from car_search.search import RelaxationStep, build_explanation
 
 
 def sample_listings() -> list[Listing]:

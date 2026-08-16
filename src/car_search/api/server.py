@@ -1,6 +1,6 @@
 """FastAPI app exposing POST /search (US-010).
 
-Run locally with: car-search (or `uvicorn car_search.server:app`).
+Run locally with: car-search (or `uvicorn car_search.api.server:app`).
 """
 
 from __future__ import annotations

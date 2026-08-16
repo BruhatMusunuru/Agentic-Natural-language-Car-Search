@@ -1,7 +1,6 @@
-from car_search.inventory import load_listings
-from car_search.models import BodyType, FilterResult, Listing, SearchFilters
-from car_search.relaxation import relax_and_search
-from car_search.search import filter_listings
+from car_search.core import BodyType, FilterResult, Listing, SearchFilters
+from car_search.data import load_listings
+from car_search.search import filter_listings, relax_and_search
 
 
 def all_listings() -> list[Listing]:

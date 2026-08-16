@@ -22,9 +22,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from car_search.agent import extract_filters, needs_clarification
-from car_search.guardrails import detect_contradiction
-from car_search.models import SearchFilters
+from car_search.agents import detect_contradiction, extract_filters, needs_clarification
+from car_search.core import SearchFilters
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GOLDEN_SET_PATH = REPO_ROOT / "src" / "car_search" / "data" / "golden_set.json"

@@ -1,11 +1,11 @@
-from car_search.dataset import search_full_dataset
-from car_search.guardrails import (
+from car_search.agents import (
     apply_price_shorthand_fallback,
     apply_synonym_fallback,
     detect_contradiction,
     safe_parse_search_filters,
 )
-from car_search.models import BodyType, FuelType, SearchFilters
+from car_search.core import BodyType, FuelType, SearchFilters
+from car_search.search import search_full_dataset
 
 
 def test_invalid_enum_value_treated_as_null() -> None:

@@ -1,5 +1,13 @@
 """car_search: natural-language car search service."""
 
+from car_search.orchestrator import SearchResponse, run_search
+
+__all__ = [
+    "SearchResponse",
+    "main",
+    "run_search",
+]
+
 
 def main() -> None:
     """Entry point for the `car-search` console script: runs the local API server."""
@@ -8,7 +16,7 @@ def main() -> None:
     import uvicorn
 
     uvicorn.run(
-        "car_search.server:app",
+        "car_search.api.server:app",
         host=os.environ.get("HOST", "127.0.0.1"),
         port=int(os.environ.get("PORT", "8000")),
     )

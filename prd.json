@@ -162,8 +162,8 @@
         "Tests pass"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "server.py: POST /search via FastAPI, Pydantic-validated request/response, 422 on missing/empty/whitespace-only query. Tested with FastAPI TestClient in tests/test_server.py. Manually verified with a live uvicorn server + curl: valid query returns correct filters/results/explanation JSON, malformed request returns 422. Verified: 55 tests pass, mypy strict clean, ruff clean."
     },
     {
       "id": "US-011",

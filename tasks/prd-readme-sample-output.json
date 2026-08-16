@@ -1,0 +1,38 @@
+{
+  "project": "Car Search Service",
+  "branchName": "ralph/readme-sample-output",
+  "description": "Add a real, live-captured sample request/response to the README's 'Running the API locally' section: replace the existing Chicago curl example's query with 'reliable family SUV under $30k, low mileage, near Detroit', and show the actual JSON response returned by a live local run of that query.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Capture a real sample response for the Detroit query",
+      "description": "As a developer maintaining the README, I want a genuine JSON response captured from a live run of the target query, so the documented example reflects real system behavior.",
+      "acceptanceCriteria": [
+        "Local API server started successfully via `uv run car-search`",
+        "`curl -s -X POST http://127.0.0.1:8000/search -H \"Content-Type: application/json\" -d '{\"query\": \"reliable family SUV under $30k, low mileage, near Detroit\"}'` executed against the running server",
+        "Raw JSON response captured and pretty-printed (e.g. via `python3 -m json.tool`)",
+        "Captured response contains actual matching listings in `results` (not an empty `clarifying_question` fallback), confirming the query is specific enough to search meaningfully",
+        "Captured response saved to a scratch file for use in US-002 (not committed to the repo)"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Started `uv run car-search` locally, POSTed the Detroit query, captured pretty-printed JSON (5 non-empty results, no clarifying_question) to scratchpad/detroit-response.json for use in US-002."
+    },
+    {
+      "id": "US-002",
+      "title": "Update README with the Detroit request + captured sample response",
+      "description": "As a new reader of the README, I want to see a full example request and its response together, so I understand what the API returns without running it myself.",
+      "acceptanceCriteria": [
+        "In the 'Running the API locally' section, the existing Chicago curl example's query text is replaced with 'reliable family SUV under $30k, low mileage, near Detroit'",
+        "The exact JSON response captured in US-001 is added directly below the curl command, inside a fenced ```json code block",
+        "The response block is shown in full -- every top-level field (filters, results, explanation, relaxed_fields, clarifying_question) and every result listing, with no truncation",
+        "No other README sections (Setup, tests/typecheck/lint, golden-set eval, Architecture) are changed",
+        "README renders as valid Markdown: fenced code blocks are properly opened and closed",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Replaced Chicago query with Detroit in the curl example and added the full US-001 response as a fenced json block directly beneath it. Fence markers balanced (14, even) and `uv run mypy` passes. No other README section touched (git diff confirms scope)."
+    }
+  ]
+}

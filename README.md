@@ -1,4 +1,4 @@
-# car-search
+# Agentic Natural-language Car Search
 
 Natural-language car search: turn a free-text query (e.g. *"reliable family
 SUV under $30k, low mileage, near Chicago"*) into structured search filters

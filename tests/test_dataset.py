@@ -6,7 +6,7 @@ dataset, and no LLM involved.
 """
 
 from car_search.core import BodyType, FuelType, SearchFilters
-from car_search.search import dataset_row_count, search_full_dataset
+from car_search.search import dataset, dataset_row_count, search_full_dataset
 
 
 def test_dataset_row_count_covers_the_whole_export() -> None:
@@ -78,3 +78,46 @@ def test_excluded_by_counts_are_independent_per_field() -> None:
     # combined matches should be <= either individual field's pass count
     assert len(result.matches) <= baseline - result.excluded_by["price_max"]
     assert len(result.matches) <= baseline - result.excluded_by["mileage_max"]
+
+
+class _CountingConnection:
+    """Wraps a real DuckDBPyConnection, counting calls to execute().
+
+    DuckDBPyConnection is a C-extension type whose attributes (including
+    `execute`) are read-only, so it can't be monkeypatched directly -- this
+    proxy forwards everything else through unchanged.
+    """
+
+    def __init__(self, real: object) -> None:
+        self._real = real
+        self.calls = 0
+
+    def execute(self, *args: object, **kwargs: object) -> object:
+        self.calls += 1
+        return self._real.execute(*args, **kwargs)  # type: ignore[attr-defined]
+
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._real, name)
+
+
+def test_search_full_dataset_issues_exactly_two_queries_per_call(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    # Regression test: excluded_by used to be computed via one SELECT
+    # count(*) per filter field (up to 9 full dataset scans per call).
+    # It's now one aggregate-count query plus one match query, regardless
+    # of how many filters are set.
+    counting_con = _CountingConnection(dataset._connection())
+    monkeypatch.setattr(dataset, "_connection", lambda: counting_con)
+
+    filters = SearchFilters(
+        make="Hyundai",
+        model="Tucson",
+        body_type=BodyType.SUV,
+        price_max=30_000,
+        mileage_max=25_000,
+        year_min=2018,
+        fuel_type=FuelType.GASOLINE,
+        location="Chicago",
+        radius_mi=50,
+    )
+    search_full_dataset(filters)
+    assert counting_con.calls == 2

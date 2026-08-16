@@ -24,19 +24,6 @@ from car_search.core import FilterResult, Listing, SearchFilters
 from car_search.geo import DEFAULT_RADIUS_MI, haversine_miles, resolve_location, zip_to_coords
 from car_search.search.dataset import search_full_dataset
 
-# Order matches the relaxation order used elsewhere (US-006): radius_mi is
-# grouped with location since they're a single filter dimension.
-FILTER_FIELDS = (
-    "make",
-    "model",
-    "body_type",
-    "price_max",
-    "mileage_max",
-    "year_min",
-    "fuel_type",
-    "radius_mi",
-)
-
 
 def _passes_make(listing: Listing, filters: SearchFilters) -> bool:
     return filters.make is None or listing.make.strip().lower() == filters.make.strip().lower()

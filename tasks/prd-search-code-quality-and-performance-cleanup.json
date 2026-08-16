@@ -1,0 +1,90 @@
+{
+  "project": "Car Search Service",
+  "branchName": "ralph/search-code-quality-and-performance-cleanup",
+  "description": "Fix four issues found in a code review of the search subsystem: consolidate search_full_dataset's per-field exclusion-count queries into a single aggregate query to cut DB scans from up to 9 to 2 per call, fix a check-then-write race in the zip-coords cache file, correct a misleading comment/unused export in search.py, refactor relaxation.py's if/elif dispatch into a dict-of-callables, and make the /search endpoint return a clean 502 instead of a raw 500 on internal RuntimeErrors.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Consolidate per-field exclusion counts into a single aggregate query",
+      "description": "As a user issuing a search, I want the backend to compute filter-exclusion counts without repeatedly scanning the full dataset, so that searches (especially ones that trigger relaxation) return faster.",
+      "acceptanceCriteria": [
+        "search_full_dataset in src/car_search/search/dataset.py computes all per-field exclusion counts (make, model, body_type, price_max, mileage_max, year_min, fuel_type, radius_mi) via a single SELECT using conditional aggregation (SUM(CASE WHEN NOT (...) THEN 1 ELSE 0 END) AS field) instead of one SELECT count(*) per field",
+        "The function issues exactly 2 queries against base_from per call: one aggregate-count query and one match query, regardless of how many filters are active",
+        "New test in tests/test_dataset.py instruments or spies on the DuckDB connection's execute() and asserts the query count per search_full_dataset call is 2",
+        "excluded_by output is unchanged in shape and values compared to the old per-field-query approach; existing tests in tests/test_dataset.py pass without modification to their assertions",
+        "Field names used as SQL column aliases remain restricted to the fixed, hardcoded set of Python identifiers already in field_predicates/radius_predicate; add a code comment documenting this trust boundary (never user input), matching the existing precedent in _connection()",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Rewrote search_full_dataset to compute all excluded_by counts (including radius_mi) via one COALESCE(sum(CASE WHEN NOT (...) THEN 1 ELSE 0 END), 0) aggregate query, then one match query -- 2 total instead of up to 9. Added test_search_full_dataset_issues_exactly_two_queries_per_call in tests/test_dataset.py, which wraps the DuckDB connection in a call-counting proxy (attributes on DuckDBPyConnection are read-only, so direct monkeypatching of .execute wasn't possible) and asserts exactly 2 calls with every filter field set. Documented the fixed-identifier trust boundary for the inlined column aliases. All existing tests in test_dataset.py pass unmodified. ruff check, mypy --strict, and full pytest suite all pass."
+    },
+    {
+      "id": "US-002",
+      "title": "Fix check-then-write race in zip-coords cache",
+      "description": "As an operator running multiple worker processes, I want the zip-coords CSV cache to be written atomically, so that concurrent workers can't corrupt or read a partially-written cache file.",
+      "acceptanceCriteria": [
+        "_zip_coords_csv_path in src/car_search/search/dataset.py writes to a temporary file suffixed with the process ID (e.g. cache_path.with_suffix(f\".{os.getpid()}.tmp\")) and then atomically renames it into place via Path.replace()",
+        "import os added to dataset.py with no naming collisions with existing imports",
+        "Already-cached case (cache_path.exists() is True) still returns the existing path without rewriting",
+        "Existing tests in tests/test_dataset.py covering this function pass",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "_zip_coords_csv_path now writes to a pid-suffixed temp file (cache_path.with_suffix(f'.{os.getpid()}.tmp')) and atomically renames it into place via Path.replace(). Added `import os`. Already-cached fast path (cache_path.exists()) unchanged. Existing tests in test_dataset.py pass; full suite, mypy, and ruff check all pass."
+    },
+    {
+      "id": "US-003",
+      "title": "Fix or remove the misleading FILTER_FIELDS comment",
+      "description": "As a developer reading search.py, I want the comment on FILTER_FIELDS to accurately describe the tuple, so I don't waste time reconciling it against relaxation.py's actual relaxation order.",
+      "acceptanceCriteria": [
+        "Repo-wide search performed (including tests/, scripts/, and search/__init__.py) confirming whether FILTER_FIELDS in src/car_search/search/search.py is consumed anywhere besides its re-export",
+        "If unused beyond the re-export: FILTER_FIELDS and its re-export from search/__init__.py are removed",
+        "If used elsewhere: comment is rewritten to describe what the order actually represents (declaration order used by filter_listings's predicate dict), no longer claiming alignment with relaxation.py's _RELAXATION_ORDER",
+        "No change made to _RELAXATION_ORDER or any ordering logic in relaxation.py",
+        "Existing tests in tests/test_search.py pass; if FILTER_FIELDS is removed, no remaining test references it",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Repo-wide grep confirmed FILTER_FIELDS had zero consumers beyond its own re-export from search/__init__.py, so it was removed (both the definition in search.py and the import/__all__ entry in __init__.py) rather than just fixing the comment. No test referenced it. Ran ruff check --fix to clean up the resulting import-block formatting. Existing tests in test_search.py pass; full suite, mypy, and ruff check all pass."
+    },
+    {
+      "id": "US-004",
+      "title": "Refactor _relax_field into a dispatch table",
+      "description": "As a developer extending relaxation logic, I want per-field relaxation logic organized as small named functions in a dispatch dict, consistent with the style used in search.py, so the code is easier to scan and extend.",
+      "acceptanceCriteria": [
+        "_relax_field in src/car_search/search/relaxation.py is replaced with individual functions per field (_relax_radius, _relax_mileage_max, _relax_price_max, _relax_year_min), each with the same signature and return behavior as the corresponding branch in the current if/elif chain",
+        "A _RELAXERS: dict[str, Callable[[SearchFilters], tuple[SearchFilters, RelaxationStep] | None]] maps field name to its handler function",
+        "_relax_field(field, filters) becomes a lookup into _RELAXERS, preserving the existing ValueError(f\"Unknown relaxable field: {field}\") behavior (type and message) for unknown fields",
+        "All existing tests in tests/test_relaxation.py pass unchanged, including any test exercising the unknown-field error path",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "_relax_field's if/elif chain replaced with _relax_radius/_relax_mileage_max/_relax_price_max/_relax_year_min functions collected in a _RELAXERS dict; _relax_field is now a lookup that raises the same ValueError('Unknown relaxable field: {field}') message/type on KeyError. All existing tests in test_relaxation.py pass unchanged, including the unknown-field error path; full suite, mypy, and ruff check all pass."
+    },
+    {
+      "id": "US-005",
+      "title": "Return a clean error response from /search on internal failures",
+      "description": "As an API consumer, I want /search to return a structured error response instead of a raw 500 traceback when the backend fails due to configuration or upstream LLM issues, so I can distinguish a bad request from a service problem and avoid leaking internals.",
+      "acceptanceCriteria": [
+        "The /search endpoint in src/car_search/api/server.py wraps the call to run_search(query) in a try/except RuntimeError block",
+        "On RuntimeError, the endpoint raises HTTPException(status_code=502, detail=str(exc)) chained with 'from exc'",
+        "Existing 422 behavior for empty query strings is unchanged",
+        "New test in tests/test_server.py simulates run_search raising RuntimeError (e.g. via monkeypatching or dependency override) and asserts the response is a 502 with the error detail in the body, not an unhandled 500",
+        "Existing tests in tests/test_server.py pass",
+        "Tests pass",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "/search now wraps run_search(query) in try/except RuntimeError, raising HTTPException(status_code=502, detail=str(exc)) from exc. Existing 422 empty-query behavior unchanged. Added test_internal_runtime_error_returns_502_not_a_raw_500 to test_server.py, which monkeypatches car_search.api.server.run_search to raise RuntimeError and asserts a 502 with the error detail in the body. Existing tests in test_server.py pass; full suite, mypy, and ruff check all pass."
+    }
+  ]
+}

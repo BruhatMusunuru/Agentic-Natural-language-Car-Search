@@ -191,8 +191,8 @@
         "Typecheck passes"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "README.md documents uv sync (incl. strands-agents[anthropic]), ANTHROPIC_API_KEY setup, running the API (uv run car-search), a full curl request/response example, the malformed-request 4xx case, the golden-set eval script, project layout, and explains the kbbFairPriceHigh-as-price and static zip-lookup decisions plus the real-not-synthetic curated data. Manually verified from a genuine clean checkout (fresh git clone into /tmp, uv sync, uv run car-search, curl) -- works end-to-end exactly as documented; tests also pass there on a different Python (3.12)."
     }
   ]
 }

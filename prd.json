@@ -17,8 +17,8 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "Curated via scripts/curate_seed_listings.py into src/car_search/data/seed_listings.json (24 rows); zip lookup in src/car_search/locations.py; loader in src/car_search/inventory.py."
+      "passes": true,
+      "notes": "Curated via scripts/curate_seed_listings.py (hardcoded real listingIds) into src/car_search/data/seed_listings.json (26 rows); zip lookup in src/car_search/locations.py; loader in src/car_search/inventory.py. Verified: 11 tests pass, mypy clean."
     },
     {
       "id": "US-002",
@@ -34,8 +34,8 @@
         "Tests pass"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "SearchFilters + BodyType/FuelType str enums added to src/car_search/models.py; tests in tests/test_models.py."
+      "passes": true,
+      "notes": "SearchFilters + BodyType/FuelType str enums added to src/car_search/models.py; tests in tests/test_models.py. Verified: tests pass, mypy clean."
     },
     {
       "id": "US-003",

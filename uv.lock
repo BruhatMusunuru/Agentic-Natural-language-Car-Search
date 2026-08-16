@@ -167,6 +167,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "pydantic" },
+    { name = "python-dotenv" },
     { name = "strands-agents", extra = ["anthropic"] },
     { name = "uvicorn" },
 ]
@@ -183,6 +184,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "pydantic", specifier = ">=2.9" },
+    { name = "python-dotenv", specifier = ">=1.0" },
     { name = "strands-agents", extras = ["anthropic"], specifier = ">=1.52.0" },
     { name = "uvicorn", specifier = ">=0.32" },
 ]

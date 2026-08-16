@@ -23,11 +23,19 @@ This installs all runtime dependencies, including `strands-agents[anthropic]`
 (AWS Strands Agents with the Anthropic model provider), FastAPI, and the dev
 tools (`pytest`, `mypy`, `ruff`).
 
-Set your Anthropic API key (the only required piece of configuration):
+Set your Anthropic API key (the only required piece of configuration).
+Either export it in your shell:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+or put it in a `.env` file at the repo root -- it's loaded automatically
+(via `python-dotenv`) whenever the service starts, so `uv run car-search`
+and friends work without a manual `export`/`source` step. A shell-exported
+value always takes precedence over `.env`. If the key is missing entirely,
+you get a clear `ANTHROPIC_API_KEY is not set` error rather than a raw SDK
+stack trace.
 
 Optional overrides (see `.env` for the full list):
 

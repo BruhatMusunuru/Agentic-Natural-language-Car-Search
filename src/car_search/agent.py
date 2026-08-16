@@ -20,7 +20,7 @@ from __future__ import annotations
 from strands import Agent
 from strands.models.anthropic import AnthropicModel
 
-from car_search.config import get_max_tokens, get_model_id
+from car_search.config import get_max_tokens, get_model_id, require_api_key
 from car_search.guardrails import apply_price_shorthand_fallback, apply_synonym_fallback
 from car_search.models import SearchFilters
 from car_search.search import search_listings
@@ -65,6 +65,7 @@ _CLARIFY_TRIGGER_FIELDS = ("body_type", "make", "model", "price_max", "location"
 
 
 def build_model() -> AnthropicModel:
+    require_api_key()
     return AnthropicModel(model_id=get_model_id(), max_tokens=get_max_tokens())
 
 

@@ -1,0 +1,52 @@
+[
+  {
+    "query": "reliable family SUV under $30k, low mileage, near Chicago",
+    "expected": {"body_type": "SUV", "price_max": 30000, "location": "Chicago", "make": null, "model": null}
+  },
+  {
+    "query": "2023 Hyundai Tucson in Aurora, IL",
+    "expected": {"make": "Hyundai", "model": "Tucson", "year_min": 2023, "location": "Aurora"}
+  },
+  {
+    "query": "electric hatchback under 15k",
+    "expected": {"fuel_type": "Electric", "body_type": "HATCH", "price_max": 15000}
+  },
+  {
+    "query": "diesel truck, at least 2020, under 60k miles",
+    "expected": {"fuel_type": "Diesel", "body_type": "TRUCKS", "year_min": 2020, "mileage_max": 60000}
+  },
+  {
+    "query": "hybrid minivan near Naperville within 25 miles",
+    "expected": {"fuel_type": "Hybrid Gas/Electric", "body_type": "VANS", "location": "Naperville", "radius_mi": 25}
+  },
+  {
+    "query": "convertible under $70k",
+    "expected": {"body_type": "CONVERT", "price_max": 70000}
+  },
+  {
+    "query": "coupe, gasoline, less than 80k",
+    "expected": {"body_type": "COUPE", "fuel_type": "Gasoline", "price_max": 80000}
+  },
+  {
+    "query": "wagon under 30k near Barrington",
+    "expected": {"body_type": "WAGON", "price_max": 30000, "location": "Barrington"}
+  },
+  {
+    "query": "sedan under 5000 dollars, high mileage ok",
+    "expected": {"body_type": "SEDAN", "price_max": 5000}
+  },
+  {
+    "query": "flex fuel SUV under 3000",
+    "expected": {"fuel_type": "Flexible Fuel", "body_type": "SUV", "price_max": 3000}
+  },
+  {
+    "query": "I want an electric diesel SUV under 50k",
+    "expected": {"fuel_type": "Diesel", "body_type": "SUV", "price_max": 50000},
+    "expect_contradiction": true
+  },
+  {
+    "query": "find me a car",
+    "expected": {},
+    "expect_clarify": true
+  }
+]

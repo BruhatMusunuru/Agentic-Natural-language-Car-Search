@@ -28,7 +28,8 @@ dev = [
 [tool.mypy]
 python_version = "3.11"
 strict = true
-packages = ["car_search"]
+mypy_path = "src"
+files = ["src", "scripts", "tests"]
 
 [tool.ruff]
 line-length = 100

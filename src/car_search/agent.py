@@ -74,6 +74,7 @@ def build_clarify_agent(model: AnthropicModel | None = None) -> Agent:
         name="clarify",
         description="Asks one clarifying question when a car search query is too vague to search meaningfully.",
         system_prompt=CLARIFY_SYSTEM_PROMPT,
+        callback_handler=None,
     )
 
 
@@ -85,6 +86,7 @@ def build_extraction_agent(model: AnthropicModel | None = None, clarify_agent: A
         name="car_search_extractor",
         system_prompt=EXTRACTION_SYSTEM_PROMPT,
         tools=[search_listings, clarify_agent.as_tool(name="clarify")],
+        callback_handler=None,
     )
 
 

@@ -177,8 +177,8 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "src/car_search/data/golden_set.json: 12 hand-written queries (incl. one contradiction example and one clarify-triggering vague example) with expected SearchFilters. scripts/eval_golden_set.py runs live extraction, prints a per-field precision/recall/F1 table + overall macro-F1, plus contradiction/clarify behavior checks; --strict exits non-zero below threshold or on a failed behavior check. Manually run against the live Anthropic API: overall F1 1.00, both behavior checks PASS. mypy strict clean (files=[src,scripts,tests] in pyproject), ruff clean."
     },
     {
       "id": "US-012",

@@ -1,16 +1,16 @@
 from car_search.inventory import load_listings
 from car_search.models import BodyType, SearchFilters
-from car_search.orchestrator import rank_and_cap, run_search
+from car_search.orchestrator import ClarifyFn, ExtractFn, rank_and_cap, run_search
 
 
-def fake_extract(filters: SearchFilters):
+def fake_extract(filters: SearchFilters) -> ExtractFn:
     def _extract(query: str) -> SearchFilters:
         return filters
 
     return _extract
 
 
-def fake_clarify(question: str = "What's your budget?"):
+def fake_clarify(question: str = "What's your budget?") -> ClarifyFn:
     def _clarify(query: str) -> str:
         return question
 

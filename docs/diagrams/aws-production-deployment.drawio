@@ -1,70 +1,65 @@
-<mxfile host="app.diagrams.net" agent="car-search-docs" version="24.0.0">
+<mxfile host="app.diagrams.net" agent="car-search-docs">
   <diagram name="AWS Production Deployment" id="aws-production-deployment">
-    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="900" math="0" shadow="0">
+    <mxGraphModel dx="1373" dy="815" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="900" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <!-- Legend / caption -->
-        <mxCell id="legend" value="Client -&gt; API Gateway: public HTTPS entry point for POST /search.&#10;Bedrock AgentCore Runtime: hosts the Strands agent (extraction + clarify sub-agent).&#10;Bedrock AgentCore Gateway: exposes search_listings as a managed tool, backed by Lambda.&#10;AWS Lambda: runs the search_listings tool (DuckDB query engine).&#10;Amazon S3: stores the daily parquet exports (data/*.parquet), replacing local disk.&#10;Amazon Bedrock: foundation model (Claude) invoked by AgentCore Runtime for extraction/clarify.&#10;Amazon CloudWatch: logs and metrics for every service in the account (dashed edge, grouped).&#10;Responses flow back along the same arrows (Lambda -&gt; Gateway -&gt; Runtime -&gt; API Gateway -&gt; Client)." style="text;html=1;align=left;verticalAlign=top;fontSize=11;spacingLeft=4;" vertex="1" parent="1">
-          <mxGeometry x="20" y="20" width="500" height="150" as="geometry" />
+        <mxCell id="legend" parent="1" style="text;html=1;align=left;verticalAlign=top;fontSize=11;spacingLeft=4;" value="Client -&gt; API Gateway: public HTTPS entry point for POST /search.&#xa;Bedrock AgentCore Runtime: hosts the Strands agent (extraction + clarify sub-agent).&#xa;Bedrock AgentCore Gateway: exposes search_listings as a managed tool, backed by Lambda.&#xa;AWS Lambda: runs the search_listings tool (DuckDB query engine).&#xa;Amazon S3: stores the daily parquet exports (data/*.parquet), replacing local disk.&#xa;Amazon Bedrock: foundation model (Claude) invoked by AgentCore Runtime for extraction/clarify.&#xa;Amazon CloudWatch: logs and metrics for every service in the account (dashed edge, grouped).&#xa;Responses flow back along the same arrows (Lambda -&gt; Gateway -&gt; Runtime -&gt; API Gateway -&gt; Client)." vertex="1">
+          <mxGeometry height="150" width="500" x="20" y="20" as="geometry" />
         </mxCell>
-
-        <!-- Group boundary (drawn first / behind) -->
-        <mxCell id="group" value="AWS Production Account" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#666666;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontStyle=2;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="560" y="200" width="500" height="420" as="geometry" />
+        <mxCell id="group" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#666666;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontStyle=2;fontSize=12;" value="AWS Production Account" vertex="1">
+          <mxGeometry height="470" width="640" x="550" y="150" as="geometry" />
         </mxCell>
-
-        <!-- Client (not an AWS service, plain shape) -->
-        <mxCell id="client" value="Client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="380" y="370" width="120" height="60" as="geometry" />
+        <mxCell id="client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Client" vertex="1">
+          <mxGeometry height="60" width="120" x="320" y="389" as="geometry" />
         </mxCell>
-
-        <!-- API Gateway (Networking & Content Delivery, #E7157B) -->
-        <mxCell id="apigw" value="Amazon API Gateway&#10;POST /search" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" vertex="1" parent="1">
-          <mxGeometry x="600" y="380" width="78" height="78" as="geometry" />
+        <mxCell id="apigw" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" value="Amazon API Gateway&#xa;POST /search" vertex="1">
+          <mxGeometry height="78" width="78" x="600" y="450" as="geometry" />
         </mxCell>
-
-        <!-- Bedrock AgentCore Runtime (AI/ML, #01A88D) -->
-        <mxCell id="runtime" value="Amazon Bedrock AgentCore&#10;-- Runtime --&#10;(hosts the Strands agent)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock_agentcore;" vertex="1" parent="1">
-          <mxGeometry x="800" y="280" width="78" height="78" as="geometry" />
+        <mxCell id="runtime" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock_agentcore;" value="Amazon Bedrock AgentCore&#xa;-- Runtime --&#xa;(hosts the Strands agent)" vertex="1">
+          <mxGeometry height="78" width="78" x="600" y="210" as="geometry" />
         </mxCell>
-
-        <!-- Bedrock AgentCore Gateway (AI/ML, #01A88D; same icon, different facet of the same service) -->
-        <mxCell id="gateway" value="Amazon Bedrock AgentCore&#10;-- Gateway --&#10;(exposes search_listings tool)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock_agentcore;" vertex="1" parent="1">
-          <mxGeometry x="800" y="480" width="78" height="78" as="geometry" />
+        <mxCell id="gateway" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock_agentcore;" value="Amazon Bedrock AgentCore&#xa;-- Gateway --&#xa;(exposes search_listings tool)" vertex="1">
+          <mxGeometry height="78" width="78" x="800" y="480" as="geometry" />
         </mxCell>
-
-        <!-- Bedrock foundation model (AI/ML, #01A88D) -->
-        <mxCell id="bedrock" value="Amazon Bedrock&#10;foundation model (Claude)" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" vertex="1" parent="1">
-          <mxGeometry x="1000" y="280" width="78" height="78" as="geometry" />
+        <mxCell id="bedrock" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#01A88D;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" value="Amazon Bedrock&#xa;foundation model (Claude)" vertex="1">
+          <mxGeometry height="78" width="78" x="1050" y="210" as="geometry" />
         </mxCell>
-
-        <!-- Lambda (Compute, #ED7100) -->
-        <mxCell id="lambda" value="AWS Lambda&#10;search_listings tool" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" vertex="1" parent="1">
-          <mxGeometry x="1000" y="480" width="78" height="78" as="geometry" />
+        <mxCell id="lambda" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#ED7100;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="AWS Lambda&#xa;search_listings tool" vertex="1">
+          <mxGeometry height="78" width="78" x="1000" y="480" as="geometry" />
         </mxCell>
-
-        <!-- S3 (Storage, #7AA116) -->
-        <mxCell id="s3" value="Amazon S3&#10;data/*.parquet" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" vertex="1" parent="1">
-          <mxGeometry x="960" y="600" width="78" height="78" as="geometry" />
+        <mxCell id="s3" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" value="Amazon S3&#xa;data/*.parquet" vertex="1">
+          <mxGeometry height="78" width="78" x="1000" y="710" as="geometry" />
         </mxCell>
-
-        <!-- CloudWatch (Management & Governance, #E7157B); outside the group, receives grouped logs edge -->
-        <mxCell id="cloudwatch" value="Amazon CloudWatch&#10;logs &amp; metrics" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;" vertex="1" parent="1">
-          <mxGeometry x="760" y="700" width="78" height="78" as="geometry" />
+        <mxCell id="cloudwatch" parent="1" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#E7157B;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cloudwatch_2;" value="Amazon CloudWatch&#xa;logs &amp; metrics" vertex="1">
+          <mxGeometry height="78" width="78" x="570" y="710" as="geometry" />
         </mxCell>
-
-        <!-- Edges: request path -->
-        <mxCell id="e_client_apigw" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="client" target="apigw"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e_apigw_runtime" value="invoke agent" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="apigw" target="runtime"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e_runtime_bedrock" value="extraction / clarify model calls" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="runtime" target="bedrock"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e_runtime_gateway" value="tool call: search_listings" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="runtime" target="gateway"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e_gateway_lambda" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="gateway" target="lambda"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e_lambda_s3" value="read parquet" style="edgeStyle=orthogonalEdgeStyle;html=1;" edge="1" parent="1" source="lambda" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
-
-        <!-- Grouped logging edge: the whole account boundary -> CloudWatch -->
-        <mxCell id="e_group_cloudwatch" value="logs &amp; metrics (all services)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="group" target="cloudwatch"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_client_apigw" edge="1" parent="1" source="client" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="apigw" value="HTTPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_apigw_runtime" edge="1" parent="1" source="apigw" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="runtime" value="invoke agent">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_runtime_bedrock" edge="1" parent="1" source="runtime" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="bedrock" value="extraction / clarify model calls">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_runtime_gateway" edge="1" parent="1" source="runtime" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="gateway" value="tool call: search_listings">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="249" />
+              <mxPoint x="760" y="519" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_gateway_lambda" edge="1" parent="1" source="gateway" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="lambda">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_lambda_s3" edge="1" parent="1" source="lambda" style="edgeStyle=orthogonalEdgeStyle;html=1;" target="s3" value="read parquet">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_group_cloudwatch" edge="1" parent="1" source="group" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;strokeColor=#666666;" target="cloudwatch" value="logs &amp; metrics (all services)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>

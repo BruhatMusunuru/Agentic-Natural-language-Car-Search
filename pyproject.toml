@@ -1,0 +1,38 @@
+[project]
+name = "car-search"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Bruhat Musunuru", email = "61818239+BruhatMusunuru@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.9",
+    "strands-agents[anthropic]>=1.52.0",
+]
+
+[project.scripts]
+car-search = "car_search:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "ruff>=0.7",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["car_search"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["uv_build>=0.9.1,<0.10.0"]
+build-backend = "uv_build"
